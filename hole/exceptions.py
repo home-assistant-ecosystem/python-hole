@@ -11,7 +11,7 @@ class HoleError(Exception):
     pass
 
 
-class PiHoleConnectionError(HoleError):
+class HoleConnectionError(HoleError):
     """When a connection error is encountered."""
 
     pass
