@@ -20,7 +20,7 @@ class Hole(object):
     """A class for handling connections with a *hole instance."""
 
     def __init__(self, host, loop, session, location='admin', tls=False,
-                 verify_tls=True):
+                 verify_tls=True, api_token=None):
         """Initialize the connection to a *hole instance."""
         self._loop = loop
         self._session = session
@@ -29,6 +29,7 @@ class Hole(object):
         self.schema = 'https' if self.tls else 'http'
         self.host = host
         self.location = location
+        self.api_token = api_token
         self.data = {}
         self.base_url = _INSTANCE.format(
             schema=self.schema, host=self.host, location=self.location)
@@ -43,6 +44,48 @@ class Hole(object):
                 "Response from *hole: %s", response.status)
             self.data = await response.json()
             _LOGGER.debug(self.data)
+
+        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
+            msg = "Can not load data from *hole: {}".format(self.host)
+            _LOGGER.error(msg)
+            raise exceptions.HoleConnectionError(msg)
+
+    async def enable(self):
+        """Enable DNS blocking on a *hole instance."""
+        if self.api_token is None:
+            _LOGGER.error("You need to supply an api_token to use this")
+            return
+        api = "{}?enable=True&auth={}".format(self.base_url, self.api_token)
+        try:
+            async with async_timeout.timeout(5, loop=self._loop):
+                response = await self._session.get(api)
+
+            _LOGGER.info(
+                "Response from *hole: %s", response.status)
+            data = await response.json()
+            _LOGGER.debug(data)
+
+        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
+            msg = "Can not load data from *hole: {}".format(self.host)
+            _LOGGER.error(msg)
+            raise exceptions.HoleConnectionError(msg)
+
+
+    async def disable(self, duration=True):
+        """Disable DNS blocking on a *hole instance."""
+        if self.api_token is None:
+            _LOGGER.error("You need to supply an api_token to use this")
+            return
+        api = "{}?disable={}&auth={}".format(self.base_url, duration,
+                                             self.api_token)
+        try:
+            async with async_timeout.timeout(5, loop=self._loop):
+                response = await self._session.get(api)
+
+            _LOGGER.info(
+                "Response from *hole: %s", response.status)
+            data = await response.json()
+            _LOGGER.debug(data)
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
             msg = "Can not load data from *hole: {}".format(self.host)
