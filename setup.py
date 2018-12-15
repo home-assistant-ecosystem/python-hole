@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Copyright (c) 2018 Fabian Affolter <fabian@affolter-engineering.ch>
-
-Licensed under MIT. All rights reserved.
-"""
+"""Setup file for the *hole API Python client."""
 import os
 import sys
 

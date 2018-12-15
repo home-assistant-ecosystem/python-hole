@@ -1,8 +1,4 @@
-"""
-Copyright (c) 2018 Fabian Affolter <fabian@affolter-engineering.ch>
-
-Licensed under MIT. All rights reserved.
-"""
+"""*hole API Python client."""
 import asyncio
 import logging
 import socket
