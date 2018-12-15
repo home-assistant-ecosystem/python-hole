@@ -51,50 +51,50 @@ class Hole(object):
 
     @property
     def status(self):
-        """Return the status of the *hole instance"""
+        """Return the status of the *hole instance."""
         return self.data['status']
 
     @property
     def unique_clients(self):
-        """Return the unique clients of the *hole instance"""
+        """Return the unique clients of the *hole instance."""
         return self.data['unique_clients']
 
     @property
     def unique_domains(self):
-        """Return the unique domains of the *hole instance"""
+        """Return the unique domains of the *hole instance."""
         return self.data['unique_domains']
 
     @property
     def ads_blocked_today(self):
-        """Return the ads blocked today of the *hole instance"""
+        """Return the ads blocked today of the *hole instance."""
         return self.data['ads_blocked_today']
 
     @property
     def ads_percentage_today(self):
-        """Return the ads percentage today of the *hole instance"""
+        """Return the ads percentage today of the *hole instance."""
         return self.data['ads_percentage_today']
 
     @property
     def clients_ever_seen(self):
-        """Return the clients_ever_seen of the *hole instance"""
+        """Return the clients_ever_seen of the *hole instance."""
         return self.data['clients_ever_seen']
 
     @property
     def dns_queries_today(self):
-        """Return the dns queries today of the *hole instance"""
+        """Return the dns queries today of the *hole instance."""
         return self.data['dns_queries_today']
 
     @property
     def domains_being_blocked(self):
-        """Return the domains being blocked of the *hole instance"""
+        """Return the domains being blocked of the *hole instance."""
         return self.data['domains_being_blocked']
 
     @property
     def queries_cached(self):
-        """Return the queries cached of the *hole instance"""
+        """Return the queries cached of the *hole instance."""
         return self.data['queries_cached']
 
     @property
     def queries_forwarded(self):
-        """Return the queries forwarded of the *hole instance"""
+        """Return the queries forwarded of the *hole instance."""
         return self.data['queries_forwarded']
