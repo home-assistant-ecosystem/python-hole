@@ -55,10 +55,11 @@ class Hole(object):
         if self.api_token is None:
             _LOGGER.error("You need to supply an api_token to use this")
             return
-        api = "{}?enable=True&auth={}".format(self.base_url, self.api_token)
+        params = "enable=True&auth{}".format(self.api_token)
         try:
             async with async_timeout.timeout(5, loop=self._loop):
-                response = await self._session.get(api)
+                response = await self._session.get(self.base_url,
+                                                   params=params)
 
             _LOGGER.info(
                 "Response from *hole: %s", response.status)
@@ -76,11 +77,11 @@ class Hole(object):
         if self.api_token is None:
             _LOGGER.error("You need to supply an api_token to use this")
             return
-        api = "{}?disable={}&auth={}".format(self.base_url, duration,
-                                             self.api_token)
+        params = "disable={}&auth{}".format(duration, self.api_token)
         try:
             async with async_timeout.timeout(5, loop=self._loop):
-                response = await self._session.get(api)
+                response = await self._session.get(self.base_url,
+                                                   params=params)
 
             _LOGGER.info(
                 "Response from *hole: %s", response.status)
