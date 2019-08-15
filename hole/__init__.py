@@ -46,6 +46,24 @@ class Hole(object):
             _LOGGER.error(msg)
             raise exceptions.HoleConnectionError(msg)
 
+    async def get_versions(self):
+        """Get version information of a *hole instance."""
+        params = "versions"
+        try:
+            async with async_timeout.timeout(5, loop=self._loop):
+                response = await self._session.get(self.base_url,
+                                                   params=params)
+
+            _LOGGER.info(
+                "Response from *hole: %s", response.status)
+            self.data = await response.json()
+            _LOGGER.debug(self.data)
+
+        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
+            msg = "Can not load data from *hole: {}".format(self.host)
+            _LOGGER.error(msg)
+            raise exceptions.HoleConnectionError(msg)
+
     async def enable(self):
         """Enable DNS blocking on a *hole instance."""
         if self.api_token is None:

@@ -17,6 +17,10 @@ async def main():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
         data = Hole('192.168.0.215', loop, session)
+
+        await data.get_versions()
+        print(json.dumps(data.data, indent=4, sort_keys=True))
+
         await data.get_data()
 
         # Get the raw data
