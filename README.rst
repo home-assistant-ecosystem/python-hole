@@ -1,14 +1,14 @@
 python-hole
 ===========
 
-Python API for interacting with a *hole instance. You know the thing that is
+Python API for interacting with a xyz-hole instance. You know the thing that is
 blocking Ads by manipulating your DNS requests and run on your single board
 computer or on other hardware with different operating systems.
 
-This module is consuming the details provided by the endpoint `/api.php` only
+This module is consuming the details provided by the endpoint ``api.php`` only
 for now.
 
-If you wonder why the weird name and that the usage of `*hole` instead of the
+If you wonder why the weird name and that the usage of xzy-hole instead of the
 real name, please contact the trademark holder. They were unhappy with original
 name of the module and came up with very funny ideas which were not feasible
 or match the existing naming standards. Also, it should remind us that a
