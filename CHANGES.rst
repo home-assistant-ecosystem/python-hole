@@ -1,6 +1,13 @@
 Changes
 =======
 
+20190817 - 0.5.0
+----------------
+
+- Add '=' for api_token parameter (thanks @johnluetke)
+- Add versions method (thanks @wfriesen)
+
+
 20190115 - 0.4.0
 -----------------
 
