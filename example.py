@@ -10,13 +10,13 @@ import aiohttp
 
 from hole import Hole
 
-API_TOKEN = 'YOUR_API_TOKEN'
+API_TOKEN = "YOUR_API_TOKEN"
 
 
 async def main():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole('192.168.0.215', loop, session)
+        data = Hole("192.168.0.215", loop, session)
 
         await data.get_versions()
         print(json.dumps(data.data, indent=4, sort_keys=True))
@@ -29,16 +29,18 @@ async def main():
         print("Status:", data.status)
         print("Domains being blocked:", data.domains_being_blocked)
 
+
 async def disable():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole('192.168.0.215', loop, session, api_token=API_TOKEN)
+        data = Hole("192.168.0.215", loop, session, api_token=API_TOKEN)
         await data.disable()
+
 
 async def enable():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole('192.168.0.215', loop, session, api_token=API_TOKEN)
+        data = Hole("192.168.0.215", loop, session, api_token=API_TOKEN)
         await data.enable()
 
 
