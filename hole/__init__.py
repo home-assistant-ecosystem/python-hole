@@ -45,7 +45,7 @@ class Hole(object):
             async with async_timeout.timeout(5, loop=self._loop):
                 response = await self._session.get(self.base_url)
 
-            _LOGGER.info("Response from *hole: %s", response.status)
+            _LOGGER.debug("Response from *hole: %s", response.status)
             self.data = await response.json()
             _LOGGER.debug(self.data)
 
