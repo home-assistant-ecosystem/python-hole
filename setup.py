@@ -20,11 +20,11 @@ if sys.argv[-1] == 'publish':
 
 setup(
     name='hole',
-    version='0.5.0',
+    version='0.5.1',
     description='Python API for interacting with *hole.',
     long_description=long_description,
-    url='https://github.com/fabaff/python-hole',
-    download_url='https://github.com/fabaff/python-hole/releases',
+    url='https://github.com/home-assistant-ecosystem/python-hole',
+    download_url='https://github.com/home-assistant-ecosystem/python-hole/releases',
     author='Fabian Affolter',
     author_email='fabian@affolter-engineering.ch',
     license='MIT',
