@@ -31,7 +31,7 @@ On a Fedora-based system.
 
 .. code:: bash
 
-    $ sudo dnf -y install python3-hole
+    $ sudo dnf -y install python-hole
 
 Usage
 -----
