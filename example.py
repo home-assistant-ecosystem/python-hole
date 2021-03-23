@@ -19,7 +19,7 @@ async def main():
         data = Hole("192.168.0.215", loop, session)
 
         await data.get_versions()
-        print(json.dumps(data.data, indent=4, sort_keys=True))
+        print(json.dumps(data.versions, indent=4, sort_keys=True))
 
         await data.get_data()
 
