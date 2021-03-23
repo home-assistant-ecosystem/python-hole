@@ -35,6 +35,7 @@ class Hole(object):
         self.location = location
         self.api_token = api_token
         self.data = {}
+        self.versions = {}
         self.base_url = _INSTANCE.format(
             schema=self.schema, host=self.host, location=self.location
         )
@@ -62,8 +63,8 @@ class Hole(object):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.info("Response from *hole: %s", response.status)
-            self.data = await response.json()
-            _LOGGER.debug(self.data)
+            self.versions = await response.json()
+            _LOGGER.debug(self.versions)
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
             msg = "Can not load data from *hole: {}".format(self.host)
