@@ -20,6 +20,9 @@ async def main():
 
         await data.get_versions()
         print(json.dumps(data.versions, indent=4, sort_keys=True))
+        print("Version:", data.core_current, "Latest:", data.core_latest, "Update available:", data.core_update)
+        print("FTL:", data.ftl_current, "Latest:", data.ftl_latest, "Update available:", data.ftl_update)
+        print("Web:", data.web_current, "Latest:", data.web_latest, "Update available:", data.web_update)
 
         await data.get_data()
 
