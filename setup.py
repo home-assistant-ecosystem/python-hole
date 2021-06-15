@@ -29,7 +29,7 @@ setup(
     author_email='fabian@affolter-engineering.ch',
     license='MIT',
     install_requires=['aiohttp<4', 'async_timeout<4'],
-    packages=['hole'],
+    packages={'hole': ['py.typed']},
     zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',
