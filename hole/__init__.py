@@ -20,12 +20,12 @@ class Hole(object):
     def __init__(
         self,
         host: str,
-        loop,
-        session,
+        loop: asyncio.events.AbstractEventLoop,
+        session: aiohttp.ClientSession,
         location: str="admin",
         tls: bool=False,
         verify_tls: bool=True,
-        api_token=None,
+        api_token: str | None=None,
     ) -> None:
         """Initialize the connection to a *hole instance."""
         self._loop = loop
