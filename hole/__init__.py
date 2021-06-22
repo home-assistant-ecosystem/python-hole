@@ -1,5 +1,6 @@
 """*hole API Python client."""
 from __future__ import annotations
+
 import asyncio
 import logging
 import socket
@@ -22,10 +23,10 @@ class Hole(object):
         host: str,
         loop: asyncio.events.AbstractEventLoop,
         session: aiohttp.ClientSession,
-        location: str="admin",
-        tls: bool=False,
-        verify_tls: bool=True,
-        api_token: str | None=None,
+        location: str = "admin",
+        tls: bool = False,
+        verify_tls: bool = True,
+        api_token: str | None = None,
     ) -> None:
         """Initialize the connection to a *hole instance."""
         self._loop = loop
