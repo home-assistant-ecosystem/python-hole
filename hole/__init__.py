@@ -35,6 +35,7 @@ class Hole(object):
         self.location = location
         self.api_token = api_token
         self.data = {}
+        self.versions = {}
         self.base_url = _INSTANCE.format(
             schema=self.schema, host=self.host, location=self.location
         )
@@ -62,8 +63,8 @@ class Hole(object):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.info("Response from *hole: %s", response.status)
-            self.data = await response.json()
-            _LOGGER.debug(self.data)
+            self.versions = await response.json()
+            _LOGGER.debug(self.versions)
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
             msg = "Can not load data from *hole: {}".format(self.host)
@@ -157,3 +158,48 @@ class Hole(object):
     def queries_forwarded(self):
         """Return the queries forwarded of the *hole instance."""
         return self.data["queries_forwarded"]
+
+    @property
+    def ftl_current(self):
+        """Return the current version of FTL of the *hole instance."""
+        return self.versions["FTL_current"]
+
+    @property
+    def ftl_latest(self):
+        """Return the latest version of FTL of the *hole instance."""
+        return self.versions["FTL_latest"]
+
+    @property
+    def ftl_update(self):
+        """Return wether an update of FTL of the *hole instance is available."""
+        return self.versions["FTL_update"]
+
+    @property
+    def core_current(self):
+        """Return the current version of the *hole instance."""
+        return self.versions["core_current"]
+
+    @property
+    def core_latest(self):
+        """Return the latest version of the *hole instance."""
+        return self.versions["core_latest"]
+
+    @property
+    def core_update(self):
+        """Return wether an update of the *hole instance is available."""
+        return self.versions["core_update"]
+
+    @property
+    def web_current(self):
+        """Return the current version of the web interface of the *hole instance."""
+        return self.versions["web_current"]
+
+    @property
+    def web_latest(self):
+        """Return the latest version of the web interface of the *hole instance."""
+        return self.versions["FTL_latest"]
+
+    @property
+    def web_update(self):
+        """Return wether an update of web interface of the *hole instance is available."""
+        return self.versions["FTL_update"]
