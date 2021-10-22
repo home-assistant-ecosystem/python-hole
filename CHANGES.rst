@@ -1,6 +1,13 @@
 Changes
 =======
 
+20211023 - 0.6.0
+----------------
+
+- Add version (thanks @Olen)
+- Update Python releases
+
+
 20200325 - 0.5.1
 ----------------
 
