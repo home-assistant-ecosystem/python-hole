@@ -16,7 +16,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as desc:
 
 setup(
     name='hole',
-    version='0.5.1',
+    version='0.6.0',
     description='Python API for interacting with *hole.',
     long_description=long_description,
     url='https://github.com/home-assistant-ecosystem/python-hole',
