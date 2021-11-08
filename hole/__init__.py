@@ -43,7 +43,7 @@ class Hole(object):
     async def get_data(self):
         """Get details of a *hole instance."""
         try:
-            async with async_timeout.timeout(5, loop=self._loop):
+            async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url)
 
             _LOGGER.debug("Response from *hole: %s", response.status)
@@ -59,7 +59,7 @@ class Hole(object):
         """Get version information of a *hole instance."""
         params = "versions"
         try:
-            async with async_timeout.timeout(5, loop=self._loop):
+            async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.info("Response from *hole: %s", response.status)
@@ -78,7 +78,7 @@ class Hole(object):
             return
         params = "enable=True&auth={}".format(self.api_token)
         try:
-            async with async_timeout.timeout(5, loop=self._loop):
+            async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.info("Response from *hole: %s", response.status)
@@ -97,7 +97,7 @@ class Hole(object):
             return
         params = "disable={}&auth={}".format(duration, self.api_token)
         try:
-            async with async_timeout.timeout(5, loop=self._loop):
+            async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.info("Response from *hole: %s", response.status)
