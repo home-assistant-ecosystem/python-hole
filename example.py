@@ -12,7 +12,7 @@ API_TOKEN = "YOUR_API_TOKEN"
 async def main():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole("192.168.0.215", loop, session)
+        data = Hole("192.168.0.215", session)
 
         await data.get_versions()
         print(json.dumps(data.versions, indent=4, sort_keys=True))
@@ -32,18 +32,17 @@ async def main():
 async def disable():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole("192.168.0.215", loop, session, api_token=API_TOKEN)
+        data = Hole("192.168.0.215", session, api_token=API_TOKEN)
         await data.disable()
 
 
 async def enable():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole("192.168.0.215", loop, session, api_token=API_TOKEN)
+        data = Hole("192.168.0.215", session, api_token=API_TOKEN)
         await data.enable()
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.run_until_complete(disable())
-loop.run_until_complete(enable())
+if __name__ == "__main__":
+    asyncio.run(main())
+    asyncio.run(disable())
+    asyncio.run(enable())
