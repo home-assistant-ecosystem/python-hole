@@ -18,7 +18,6 @@ class Hole(object):
     def __init__(
         self,
         host,
-        loop,
         session,
         location="admin",
         tls=False,
@@ -26,7 +25,6 @@ class Hole(object):
         api_token=None,
     ):
         """Initialize the connection to a *hole instance."""
-        self._loop = loop
         self._session = session
         self.tls = tls
         self.verify_tls = verify_tls
