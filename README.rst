@@ -51,17 +51,6 @@ Roadmap
 There are more features on the roadmap but there is no ETA because I prefer
 to support Open Source projects were third party contributions are appreciated.
 
-Development
------------
-
-For development is recommended to use a ``venv``.
-
-.. code:: bash
-
-    $ python3 -m venv .
-    $ source bin/activate
-    $ python3 setup.py develop
-
 License
 -------
 
