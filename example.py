@@ -1,8 +1,4 @@
-"""
-Copyright (c) 2018 Fabian Affolter <fabian@affolter-engineering.ch>
-
-Licensed under MIT. All rights reserved.
-"""
+"""Example for the usage of the hole module."""
 import asyncio
 import json
 
