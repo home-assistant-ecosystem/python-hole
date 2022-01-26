@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """Setup file for the *hole API Python client."""
 import os
-import sys
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
