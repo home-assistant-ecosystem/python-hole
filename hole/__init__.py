@@ -60,7 +60,7 @@ class Hole(object):
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
-            _LOGGER.info("Response from *hole: %s", response.status)
+            _LOGGER.debug("Response from *hole: %s", response.status)
             self.versions = await response.json()
             _LOGGER.debug(self.versions)
 
@@ -79,7 +79,7 @@ class Hole(object):
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
-            _LOGGER.info("Response from *hole: %s", response.status)
+            _LOGGER.debug("Response from *hole: %s", response.status)
             data = await response.json()
             _LOGGER.debug(data)
 
@@ -98,7 +98,7 @@ class Hole(object):
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
-            _LOGGER.info("Response from *hole: %s", response.status)
+            _LOGGER.debug("Response from *hole: %s", response.status)
             data = await response.json()
             _LOGGER.debug(data)
 
