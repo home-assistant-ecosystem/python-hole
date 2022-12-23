@@ -40,7 +40,7 @@ class Hole(object):
 
     async def get_data(self):
         """Get details of a *hole instance."""
-        params = "summary&auth={}".format(self.api_token)
+        params = "summaryRaw&auth={}".format(self.api_token)
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
