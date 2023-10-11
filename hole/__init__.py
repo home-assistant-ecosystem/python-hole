@@ -196,9 +196,9 @@ class Hole(object):
     @property
     def web_latest(self):
         """Return the latest version of the web interface of the *hole instance."""
-        return self.versions["FTL_latest"]
+        return self.versions["web_latest"]
 
     @property
     def web_update(self):
         """Return wether an update of web interface of the *hole instance is available."""
-        return self.versions["FTL_update"]
+        return self.versions["web_update"]
