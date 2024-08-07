@@ -79,9 +79,14 @@ class Hole(object):
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
+                _LOGGER.debug("Response from *hole: %s", response.status)
 
-            _LOGGER.debug("Response from *hole: %s", response.status)
-            data = await response.json()
+                while self.status != "enabled":
+                    _LOGGER.debug("Awaiting status to be enabled")
+                    await self.get_data()
+                    await asyncio.sleep(0.01)
+
+            data = self.status
             _LOGGER.debug(data)
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
@@ -98,9 +103,14 @@ class Hole(object):
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
+                _LOGGER.debug("Response from *hole: %s", response.status)
 
-            _LOGGER.debug("Response from *hole: %s", response.status)
-            data = await response.json()
+                while self.status != "disabled":
+                    _LOGGER.debug("Awaiting status to be disabled")
+                    await self.get_data()
+                    await asyncio.sleep(0.01)
+
+            data = self.status
             _LOGGER.debug(data)
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
