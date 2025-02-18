@@ -19,7 +19,7 @@ class Hole(object):
         self,
         host,
         session,
-        location="admin",
+        location="api",
         tls=False,
         verify_tls=True,
         api_token=None,
@@ -38,37 +38,36 @@ class Hole(object):
             schema=self.schema, host=self.host, location=self.location
         )
 
+    async def _request(self, params):
+        """Helper method to make API requests with fallback."""
+        for location in ["api", "admin"]:
+            self.base_url = _INSTANCE.format(
+                schema=self.schema, host=self.host, location=location
+            )
+            try:
+                async with async_timeout.timeout(5):
+                    response = await self._session.get(self.base_url, params=params)
+                
+                if response.status == 200:
+                    return await response.json()
+            except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
+                _LOGGER.warning("Failed to connect using location '%s', trying fallback...", location)
+                continue
+        msg = "Cannot load data from *hole: {}".format(self.host)
+        _LOGGER.error(msg)
+        raise exceptions.HoleConnectionError(msg)
+
     async def get_data(self):
         """Get details of a *hole instance."""
         params = "summaryRaw&auth={}".format(self.api_token)
-        try:
-            async with async_timeout.timeout(5):
-                response = await self._session.get(self.base_url, params=params)
-
-            _LOGGER.debug("Response from *hole: %s", response.status)
-            self.data = await response.json()
-            _LOGGER.debug(self.data)
-
-        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
-            msg = "Can not load data from *hole: {}".format(self.host)
-            _LOGGER.error(msg)
-            raise exceptions.HoleConnectionError(msg)
+        self.data = await self._request(params)
+        _LOGGER.debug(self.data)
 
     async def get_versions(self):
         """Get version information of a *hole instance."""
         params = "versions"
-        try:
-            async with async_timeout.timeout(5):
-                response = await self._session.get(self.base_url, params=params)
-
-            _LOGGER.debug("Response from *hole: %s", response.status)
-            self.versions = await response.json()
-            _LOGGER.debug(self.versions)
-
-        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
-            msg = "Can not load data from *hole: {}".format(self.host)
-            _LOGGER.error(msg)
-            raise exceptions.HoleConnectionError(msg)
+        self.versions = await self._request(params)
+        _LOGGER.debug(self.versions)
 
     async def enable(self):
         """Enable DNS blocking on a *hole instance."""
@@ -76,23 +75,11 @@ class Hole(object):
             _LOGGER.error("You need to supply an api_token to use this")
             return
         params = "enable=True&auth={}".format(self.api_token)
-        try:
-            async with async_timeout.timeout(5):
-                response = await self._session.get(self.base_url, params=params)
-                _LOGGER.debug("Response from *hole: %s", response.status)
-
-                while self.status != "enabled":
-                    _LOGGER.debug("Awaiting status to be enabled")
-                    await self.get_data()
-                    await asyncio.sleep(0.01)
-
-            data = self.status
-            _LOGGER.debug(data)
-
-        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
-            msg = "Can not load data from *hole: {}".format(self.host)
-            _LOGGER.error(msg)
-            raise exceptions.HoleConnectionError(msg)
+        await self._request(params)
+        while self.status != "enabled":
+            _LOGGER.debug("Awaiting status to be enabled")
+            await self.get_data()
+            await asyncio.sleep(0.01)
 
     async def disable(self, duration=True):
         """Disable DNS blocking on a *hole instance."""
@@ -100,115 +87,94 @@ class Hole(object):
             _LOGGER.error("You need to supply an api_token to use this")
             return
         params = "disable={}&auth={}".format(duration, self.api_token)
-        try:
-            async with async_timeout.timeout(5):
-                response = await self._session.get(self.base_url, params=params)
-                _LOGGER.debug("Response from *hole: %s", response.status)
-
-                while self.status != "disabled":
-                    _LOGGER.debug("Awaiting status to be disabled")
-                    await self.get_data()
-                    await asyncio.sleep(0.01)
-
-            data = self.status
-            _LOGGER.debug(data)
-
-        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror):
-            msg = "Can not load data from *hole: {}".format(self.host)
-            _LOGGER.error(msg)
-            raise exceptions.HoleConnectionError(msg)
+        await self._request(params)
+        while self.status != "disabled":
+            _LOGGER.debug("Awaiting status to be disabled")
+            await self.get_data()
+            await asyncio.sleep(0.01)
 
     @property
     def status(self):
         """Return the status of the *hole instance."""
-        return self.data["status"]
+        return self.data.get("status")
 
     @property
     def unique_clients(self):
         """Return the unique clients of the *hole instance."""
-        return self.data["unique_clients"]
+        return self.data.get("unique_clients")
 
     @property
     def unique_domains(self):
         """Return the unique domains of the *hole instance."""
-        return self.data["unique_domains"]
+        return self.data.get("unique_domains")
 
     @property
     def ads_blocked_today(self):
         """Return the ads blocked today of the *hole instance."""
-        return self.data["ads_blocked_today"]
+        return self.data.get("ads_blocked_today")
 
     @property
     def ads_percentage_today(self):
         """Return the ads percentage today of the *hole instance."""
-        return self.data["ads_percentage_today"]
+        return self.data.get("ads_percentage_today")
 
     @property
     def clients_ever_seen(self):
         """Return the clients_ever_seen of the *hole instance."""
-        return self.data["clients_ever_seen"]
+        return self.data.get("clients_ever_seen")
 
     @property
     def dns_queries_today(self):
         """Return the dns queries today of the *hole instance."""
-        return self.data["dns_queries_today"]
+        return self.data.get("dns_queries_today")
 
     @property
     def domains_being_blocked(self):
         """Return the domains being blocked of the *hole instance."""
-        return self.data["domains_being_blocked"]
+        return self.data.get("domains_being_blocked")
 
     @property
     def queries_cached(self):
         """Return the queries cached of the *hole instance."""
-        return self.data["queries_cached"]
+        return self.data.get("queries_cached")
 
     @property
     def queries_forwarded(self):
         """Return the queries forwarded of the *hole instance."""
-        return self.data["queries_forwarded"]
+        return self.data.get("queries_forwarded")
 
     @property
     def ftl_current(self):
-        """Return the current version of FTL of the *hole instance."""
-        return self.versions["FTL_current"]
+        return self.versions.get("FTL_current")
 
     @property
     def ftl_latest(self):
-        """Return the latest version of FTL of the *hole instance."""
-        return self.versions["FTL_latest"]
+        return self.versions.get("FTL_latest")
 
     @property
     def ftl_update(self):
-        """Return wether an update of FTL of the *hole instance is available."""
-        return self.versions["FTL_update"]
+        return self.versions.get("FTL_update")
 
     @property
     def core_current(self):
-        """Return the current version of the *hole instance."""
-        return self.versions["core_current"]
+        return self.versions.get("core_current")
 
     @property
     def core_latest(self):
-        """Return the latest version of the *hole instance."""
-        return self.versions["core_latest"]
+        return self.versions.get("core_latest")
 
     @property
     def core_update(self):
-        """Return wether an update of the *hole instance is available."""
-        return self.versions["core_update"]
+        return self.versions.get("core_update")
 
     @property
     def web_current(self):
-        """Return the current version of the web interface of the *hole instance."""
-        return self.versions["web_current"]
+        return self.versions.get("web_current")
 
     @property
     def web_latest(self):
-        """Return the latest version of the web interface of the *hole instance."""
-        return self.versions["web_latest"]
+        return self.versions.get("web_latest")
 
     @property
     def web_update(self):
-        """Return wether an update of web interface of the *hole instance is available."""
-        return self.versions["web_update"]
+        return self.versions.get("web_update")
