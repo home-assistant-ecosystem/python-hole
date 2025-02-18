@@ -1,5 +1,9 @@
 Changes
 =======
+20250218 - 0.9.0
+----------------
+
+- Update API path to use `/api` with fallback to `/admin` for compatibility with newer Pi-hole versions
 
 0.8.0 - 20221223
 ----------------
