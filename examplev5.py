@@ -12,7 +12,7 @@ API_TOKEN = "YOUR_API_TOKEN"
 async def main():
     """Get the data from a *hole instance."""
     async with aiohttp.ClientSession() as session:
-        data = Hole("192.168.0.215", session)
+        data = Hole("192.168.0.215", session, version=5)
 
         await data.get_versions()
         print(json.dumps(data.versions, indent=4, sort_keys=True))
