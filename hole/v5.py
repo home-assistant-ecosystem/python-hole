@@ -5,7 +5,12 @@ import logging
 import socket
 
 import aiohttp
-import async_timeout
+import sys
+
+if sys.version_info >= (3, 11):
+    import asyncio as async_timeout
+else:
+    import async_timeout
 
 from . import exceptions
 

@@ -21,7 +21,7 @@ setup(
     license="MIT",
     install_requires=[
         "aiohttp<4",
-        "async_timeout>4,<5",
+        'async_timeout; python_version < "3.11"',
     ],
     packages=["hole"],
     python_requires=">=3.9",
