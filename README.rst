@@ -5,8 +5,21 @@ Python API for interacting with a xyz-hole instance. You know the thing that is
 blocking Ads by manipulating your DNS requests and run on your single board
 computer or on other hardware with different operating systems.
 
-This module is consuming the details provided by the endpoint ``api.php`` only
-for now.
+This module supports both v5 and v6 versions of the API through a unified interface.
+Simply specify the version when creating your client:
+
+.. code:: python
+
+    from hole import Hole
+    
+    # For v6 (default)
+    client = Hole("YOUR_API_TOKEN")
+    
+    # For v5
+    client_v5 = Hole("YOUR_API_TOKEN", version=5)
+
+This module is consuming the details provided by the endpoint ``api.php`` and other
+API endpoints available in v5 and v6.
 
 If you wonder why the weird name and that the usage of xzy-hole instead of the
 real name, please contact the trademark holder. They were unhappy with original
@@ -43,13 +56,13 @@ available. The lastest release is usually present in the ``unstable`` channel.
 Usage
 -----
 
-The file ``example.py`` contains an example about how to use this module.
+The files ``examplev5.py`` and ``examplev6.py`` contains examples about how to use this module.
 
 Roadmap
 -------
 
 There are more features on the roadmap but there is no ETA because I prefer
-to support Open Source projects were third party contributions are appreciated.
+to support Open Source projects where third party contributions are appreciated.
 
 License
 -------
