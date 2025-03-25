@@ -9,6 +9,7 @@ from typing import Optional, Literal
 
 import aiohttp
 import sys
+
 if sys.version_info >= (3, 11):
     import asyncio as async_timeout
 else:
