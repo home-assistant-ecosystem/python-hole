@@ -2,6 +2,7 @@ from .v5 import HoleV5
 from .v6 import HoleV6
 from .exceptions import HoleError
 
+
 def Hole(*args, version=6, **kwargs):
     """Factory to get the correct Hole class for Pi-hole v5 or v6."""
     if version == 5:

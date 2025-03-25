@@ -1,4 +1,5 @@
 """*hole API Python client."""
+
 import asyncio
 import logging
 import socket

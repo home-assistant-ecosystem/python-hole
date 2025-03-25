@@ -1,4 +1,5 @@
 """Example for the usage of the hole module."""
+
 import asyncio
 import json
 

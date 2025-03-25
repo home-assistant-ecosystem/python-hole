@@ -1,4 +1,5 @@
 """*hole API Python client."""
+
 import asyncio
 import socket
 import json
@@ -15,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _INSTANCE = "{protocol}://{host}{port_str}/{location}/api"
 
+
 class HoleV6:
     """A class for handling connections with a Pi-hole instance."""
 
@@ -26,27 +28,29 @@ class HoleV6:
         protocol: Literal["http", "https"] = "http",
         verify_tls: bool = True,
         password: Optional[str] = None,
-        port: Optional[int] = None
+        port: Optional[int] = None,
     ):
         """Initialize the connection to a Pi-hole instance."""
         if protocol not in ["http", "https"]:
-            raise exceptions.HoleError(f"Protocol {protocol} is invalid. Must be http or https")
+            raise exceptions.HoleError(
+                f"Protocol {protocol} is invalid. Must be http or https"
+            )
 
         self._session = session
         self.protocol = protocol
         self.verify_tls = verify_tls if protocol == "https" else False
         self.host = host
-        self.location = location.strip('/')  # Remove any trailing slashes
+        self.location = location.strip("/")  # Remove any trailing slashes
         self.password = password
         self._session_id = None
         self._session_validity = None
         self._csrf_token = None
-        
+
         # Set default ports if not specified
         if port is None:
             port = 443 if protocol == "https" else 80
         self.port = port
-        
+
         # Initialize data containers
         self.data = {}
         self.blocked_domains = {}
@@ -55,7 +59,7 @@ class HoleV6:
         self.upstreams = {}
         self.blocking_status = {}
         self.versions = {}
-        
+
         # Construct base URL
         if (protocol == "http" and port != 80) or (protocol == "https" and port != 443):
             self.base_url = f"{protocol}://{host}:{port}"
@@ -72,52 +76,62 @@ class HoleV6:
             await self.logout()
 
         auth_url = f"{self.base_url}/api/auth"
-        
+
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.post(
-                    auth_url,
-                    json={"password": str(self.password)},
-                    ssl=self.verify_tls
+                    auth_url, json={"password": str(self.password)}, ssl=self.verify_tls
                 )
-                
+
                 if response.status == 401:
-                    raise exceptions.HoleError("Authentication failed: Invalid password")
+                    raise exceptions.HoleError(
+                        "Authentication failed: Invalid password"
+                    )
                 elif response.status == 400:
                     try:
                         error_data = json.loads(await response.text())
-                        error_msg = error_data.get("error", {}).get("message", "Bad request")
+                        error_msg = error_data.get("error", {}).get(
+                            "message", "Bad request"
+                        )
                     except json.JSONDecodeError:
                         error_msg = "Bad request"
                     raise exceptions.HoleError(f"Authentication failed: {error_msg}")
                 elif response.status != 200:
-                    raise exceptions.HoleError(f"Authentication failed with status {response.status}")
-                
+                    raise exceptions.HoleError(
+                        f"Authentication failed with status {response.status}"
+                    )
+
                 try:
                     data = json.loads(await response.text())
                 except json.JSONDecodeError as err:
                     raise exceptions.HoleError(f"Invalid JSON response: {err}")
-                
+
                 session_data = data.get("session", {})
-                
+
                 if not session_data.get("valid"):
-                    raise exceptions.HoleError("Authentication unsuccessful: Invalid session")
-                
+                    raise exceptions.HoleError(
+                        "Authentication unsuccessful: Invalid session"
+                    )
+
                 self._session_id = session_data.get("sid")
                 if not self._session_id:
-                    raise exceptions.HoleError("Authentication failed: No session ID received")
-                
+                    raise exceptions.HoleError(
+                        "Authentication failed: No session ID received"
+                    )
+
                 # Store CSRF token if provided
                 self._csrf_token = session_data.get("csrf")
-                
+
                 # Set session validity
                 validity_seconds = session_data.get("validity", 300)
                 self._session_validity = time.time() + validity_seconds
-                
+
                 _LOGGER.info("Successfully authenticated with Pi-hole")
-                
+
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
-            raise exceptions.HoleConnectionError(f"Cannot authenticate with Pi-hole: {err}")
+            raise exceptions.HoleConnectionError(
+                f"Cannot authenticate with Pi-hole: {err}"
+            )
 
     async def logout(self):
         """Logout and cleanup the current session."""
@@ -126,13 +140,11 @@ class HoleV6:
 
         logout_url = f"{self.base_url}/api/auth"
         headers = {"X-FTL-SID": self._session_id}
-        
+
         try:
             async with async_timeout.timeout(5):
                 await self._session.delete(
-                    logout_url,
-                    headers=headers,
-                    ssl=self.verify_tls
+                    logout_url, headers=headers, ssl=self.verify_tls
                 )
         finally:
             self._session_id = None
@@ -148,7 +160,9 @@ class HoleV6:
 
     async def ensure_auth(self):
         """Ensure we have a valid session."""
-        if not self._session_id or (self._session_validity and time.time() > self._session_validity):
+        if not self._session_id or (
+            self._session_validity and time.time() > self._session_validity
+        ):
             await self.authenticate()
 
     async def _fetch_data(self, endpoint: str, params=None) -> dict:
@@ -157,21 +171,18 @@ class HoleV6:
 
         url = f"{self.base_url}/api{endpoint}"
         headers = {}
-        
+
         if self._session_id:
             headers["X-FTL-SID"] = self._session_id
             if self._csrf_token:
                 headers["X-FTL-CSRF"] = self._csrf_token
-        
+
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                    ssl=self.verify_tls
+                    url, params=params, headers=headers, ssl=self.verify_tls
                 )
-                
+
                 if response.status == 401:
                     _LOGGER.info("Session expired, re-authenticating")
                     await self.authenticate()
@@ -179,19 +190,20 @@ class HoleV6:
                     if self._csrf_token:
                         headers["X-FTL-CSRF"] = self._csrf_token
                     response = await self._session.get(
-                        url,
-                        params=params,
-                        headers=headers,
-                        ssl=self.verify_tls
+                        url, params=params, headers=headers, ssl=self.verify_tls
                     )
-                
+
                 if response.status != 200:
-                    raise exceptions.HoleError(f"Failed to fetch data: {response.status}")
-                
+                    raise exceptions.HoleError(
+                        f"Failed to fetch data: {response.status}"
+                    )
+
                 return await response.json()
-                
+
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
-            raise exceptions.HoleConnectionError(f"Cannot fetch data from Pi-hole: {err}")
+            raise exceptions.HoleConnectionError(
+                f"Cannot fetch data from Pi-hole: {err}"
+            )
 
     async def get_data(self):
         """Get comprehensive data from Pi-hole instance."""
@@ -199,8 +211,12 @@ class HoleV6:
 
         # Fetch all required data
         self.data = await self._fetch_data("/stats/summary")
-        self.blocked_domains = await self._fetch_data("/stats/top_domains", {"blocked": "true", "count": 10})
-        self.permitted_domains = await self._fetch_data("/stats/top_domains", {"blocked": "false", "count": 10})
+        self.blocked_domains = await self._fetch_data(
+            "/stats/top_domains", {"blocked": "true", "count": 10}
+        )
+        self.permitted_domains = await self._fetch_data(
+            "/stats/top_domains", {"blocked": "false", "count": 10}
+        )
         self.clients = await self._fetch_data("/stats/top_clients", {"count": 10})
         self.upstreams = await self._fetch_data("/stats/upstreams")
         self.blocking_status = await self._fetch_data("/dns/blocking")
@@ -215,31 +231,29 @@ class HoleV6:
     async def enable(self):
         """Enable DNS blocking."""
         if not self.password:
-            raise exceptions.HoleError("Password required for enable/disable operations")
+            raise exceptions.HoleError(
+                "Password required for enable/disable operations"
+            )
 
         await self.ensure_auth()
         url = f"{self.base_url}/api/dns/blocking"
         headers = {"X-FTL-SID": self._session_id}
         if self._csrf_token:
             headers["X-FTL-CSRF"] = self._csrf_token
-            
-        payload = {
-            "blocking": True,
-            "timer": None
-        }
-        
+
+        payload = {"blocking": True, "timer": None}
+
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.post(
-                    url,
-                    json=payload,
-                    headers=headers,
-                    ssl=self.verify_tls
+                    url, json=payload, headers=headers, ssl=self.verify_tls
                 )
-                
+
                 if response.status != 200:
-                    raise exceptions.HoleError(f"Failed to enable blocking: {response.status}")
-                
+                    raise exceptions.HoleError(
+                        f"Failed to enable blocking: {response.status}"
+                    )
+
                 # Wait for status to be enabled
                 retries = 0
                 while retries < 10:  # Maximum 10 retries
@@ -248,45 +262,43 @@ class HoleV6:
                         break
                     retries += 1
                     await asyncio.sleep(0.1)
-                
+
                 _LOGGER.info("Successfully enabled Pi-hole blocking")
                 return await response.json()
-                
+
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
             raise exceptions.HoleConnectionError(f"Cannot enable blocking: {err}")
 
     async def disable(self, duration=0):
         """Disable DNS blocking.
-        
+
         Args:
             duration: Number of seconds to disable blocking for. If 0, disable indefinitely.
         """
         if not self.password:
-            raise exceptions.HoleError("Password required for enable/disable operations")
+            raise exceptions.HoleError(
+                "Password required for enable/disable operations"
+            )
 
         await self.ensure_auth()
         url = f"{self.base_url}/api/dns/blocking"
         headers = {"X-FTL-SID": self._session_id}
         if self._csrf_token:
             headers["X-FTL-CSRF"] = self._csrf_token
-            
-        payload = {
-            "blocking": False,
-            "timer": duration if duration > 0 else None
-        }
-        
+
+        payload = {"blocking": False, "timer": duration if duration > 0 else None}
+
         try:
             async with async_timeout.timeout(5):
                 response = await self._session.post(
-                    url,
-                    json=payload,
-                    headers=headers,
-                    ssl=self.verify_tls
+                    url, json=payload, headers=headers, ssl=self.verify_tls
                 )
-                
+
                 if response.status != 200:
-                    raise exceptions.HoleError(f"Failed to disable blocking: {response.status}")
-                
+                    raise exceptions.HoleError(
+                        f"Failed to disable blocking: {response.status}"
+                    )
+
                 # Wait for status to be disabled
                 retries = 0
                 while retries < 10:  # Maximum 10 retries
@@ -295,10 +307,13 @@ class HoleV6:
                         break
                     retries += 1
                     await asyncio.sleep(0.1)
-                
-                _LOGGER.info("Successfully disabled Pi-hole blocking%s", f" for {duration} seconds" if duration > 0 else "")
+
+                _LOGGER.info(
+                    "Successfully disabled Pi-hole blocking%s",
+                    f" for {duration} seconds" if duration > 0 else "",
+                )
                 return await response.json()
-                
+
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
             raise exceptions.HoleConnectionError(f"Cannot disable blocking: {err}")
 
