@@ -24,7 +24,7 @@ setup(
         'async_timeout; python_version < "3.11"',
     ],
     packages=["hole"],
-    python_requires=">=3.9",
+    python_requires=">=3.11",
     zip_safe=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
