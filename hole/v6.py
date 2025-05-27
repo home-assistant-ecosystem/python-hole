@@ -191,9 +191,10 @@ class HoleV6:
                 if response.status == 401:
                     _LOGGER.info("Session expired, re-authenticating")
                     await self.authenticate()
-                    headers["X-FTL-SID"] = self._session_id
-                    if self._csrf_token:
-                        headers["X-FTL-CSRF"] = self._csrf_token
+                    if self._session_id:
+                        headers["X-FTL-SID"] = self._session_id
+                        if self._csrf_token:
+                            headers["X-FTL-CSRF"] = self._csrf_token
                     response = await self._session.get(
                         url, params=params, headers=headers, ssl=self.verify_tls
                     )
