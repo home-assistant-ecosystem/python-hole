@@ -34,6 +34,7 @@ class HoleV6:
         verify_tls: bool = True,
         password: Optional[str] = None,
         port: Optional[int] = None,
+        timeout: int = 15,
     ):
         """Initialize the connection to a Pi-hole instance."""
         if protocol not in ["http", "https"]:
@@ -47,6 +48,7 @@ class HoleV6:
         self.host = host
         self.location = location.strip("/")  # Remove any trailing slashes
         self.password = password
+        self.timeout = timeout
         self._session_id = None
         self._session_validity = None
         self._csrf_token = None
@@ -83,7 +85,7 @@ class HoleV6:
         auth_url = f"{self.base_url}/api/auth"
 
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(self.timeout):
                 response = await self._session.post(
                     auth_url, json={"password": str(self.password)}, ssl=self.verify_tls
                 )
@@ -147,7 +149,7 @@ class HoleV6:
         headers = {"X-FTL-SID": self._session_id}
 
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(self.timeout):
                 await self._session.delete(
                     logout_url, headers=headers, ssl=self.verify_tls
                 )
@@ -183,7 +185,7 @@ class HoleV6:
                 headers["X-FTL-CSRF"] = self._csrf_token
 
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(self.timeout):
                 response = await self._session.get(
                     url, params=params, headers=headers, ssl=self.verify_tls
                 )
@@ -249,7 +251,7 @@ class HoleV6:
         payload = {"blocking": True, "timer": None}
 
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(self.timeout):
                 response = await self._session.post(
                     url, json=payload, headers=headers, ssl=self.verify_tls
                 )
@@ -294,7 +296,7 @@ class HoleV6:
         payload = {"blocking": False, "timer": duration if duration > 0 else None}
 
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(self.timeout):
                 response = await self._session.post(
                     url, json=payload, headers=headers, ssl=self.verify_tls
                 )
