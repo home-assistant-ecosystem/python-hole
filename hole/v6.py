@@ -136,7 +136,7 @@ class HoleV6:
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
             raise exceptions.HoleConnectionError(
                 f"Cannot authenticate with Pi-hole: {err}"
-            )
+            ) from err
 
     async def logout(self):
         """Logout and cleanup the current session."""
