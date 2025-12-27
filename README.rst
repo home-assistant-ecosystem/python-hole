@@ -47,7 +47,7 @@ On a Fedora-based system.
     $ sudo dnf -y install python-hole
 
 For Nix or NixOS is a `pre-packed module <https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&query=hole>`_
-available. The lastest release is usually present in the ``unstable`` channel.
+available. The latest release is usually present in the ``unstable`` channel.
 
 .. code:: bash
 
