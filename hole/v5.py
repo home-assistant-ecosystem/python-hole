@@ -42,7 +42,7 @@ class HoleV5(object):
         """Get details of a *hole instance."""
         params = "summaryRaw&auth={}".format(self.api_token)
         try:
-            async with async_timeout.timeout(5):
+            async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.debug("Response from *hole: %s", response.status)
@@ -58,7 +58,7 @@ class HoleV5(object):
         """Get version information of a *hole instance."""
         params = "versions"
         try:
-            async with async_timeout.timeout(5):
+            async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
 
             _LOGGER.debug("Response from *hole: %s", response.status)
@@ -77,7 +77,7 @@ class HoleV5(object):
             return
         params = "enable=True&auth={}".format(self.api_token)
         try:
-            async with async_timeout.timeout(5):
+            async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
                 _LOGGER.debug("Response from *hole: %s", response.status)
 
@@ -101,7 +101,7 @@ class HoleV5(object):
             return
         params = "disable={}&auth={}".format(duration, self.api_token)
         try:
-            async with async_timeout.timeout(5):
+            async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
                 _LOGGER.debug("Response from *hole: %s", response.status)
 
