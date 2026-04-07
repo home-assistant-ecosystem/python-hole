@@ -4,16 +4,10 @@ import asyncio
 import json
 import logging
 import socket
-import sys
 import time
 from typing import Literal, Optional
 
 import aiohttp
-
-if sys.version_info >= (3, 11):
-    import asyncio as async_timeout
-else:
-    import async_timeout
 
 from . import exceptions
 
@@ -85,7 +79,7 @@ class HoleV6:
         auth_url = f"{self.base_url}/api/auth"
 
         try:
-            async with async_timeout.timeout(self.timeout):
+            async with asyncio.timeout(self.timeout):
                 response = await self._session.post(
                     auth_url, json={"password": str(self.password)}, ssl=self.verify_tls
                 )
@@ -149,7 +143,7 @@ class HoleV6:
         headers = {"X-FTL-SID": self._session_id}
 
         try:
-            async with async_timeout.timeout(self.timeout):
+            async with asyncio.timeout(self.timeout):
                 await self._session.delete(
                     logout_url, headers=headers, ssl=self.verify_tls
                 )
@@ -185,7 +179,7 @@ class HoleV6:
                 headers["X-FTL-CSRF"] = self._csrf_token
 
         try:
-            async with async_timeout.timeout(self.timeout):
+            async with asyncio.timeout(self.timeout):
                 response = await self._session.get(
                     url, params=params, headers=headers, ssl=self.verify_tls
                 )
@@ -252,7 +246,7 @@ class HoleV6:
         payload = {"blocking": True, "timer": None}
 
         try:
-            async with async_timeout.timeout(self.timeout):
+            async with asyncio.timeout(self.timeout):
                 response = await self._session.post(
                     url, json=payload, headers=headers, ssl=self.verify_tls
                 )
@@ -297,7 +291,7 @@ class HoleV6:
         payload = {"blocking": False, "timer": duration if duration > 0 else None}
 
         try:
-            async with async_timeout.timeout(self.timeout):
+            async with asyncio.timeout(self.timeout):
                 response = await self._session.post(
                     url, json=payload, headers=headers, ssl=self.verify_tls
                 )
