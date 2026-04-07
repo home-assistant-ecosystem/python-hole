@@ -31,6 +31,22 @@ classifiers = [
     "Topic :: Utilities",
 ]
 
+[project.optional-dependencies]
+test = [
+  "pytest>=9",
+  "pytest-asyncio>=0.21",
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest>=9",
+  "pytest-asyncio>=0.21",
+  "aiohttp>=3.8.4,<4"
+]
+
+[tool.hatch.envs.test.scripts]
+run = "pytest"
+
 [project.urls]
 Homepage = "https://github.com/home-assistant-ecosystem/python-hole"
 Download = "https://github.com/home-assistant-ecosystem/python-hole/releases"
