@@ -3,9 +3,9 @@
 import asyncio
 import logging
 import socket
+import sys
 
 import aiohttp
-import sys
 
 if sys.version_info >= (3, 11):
     import asyncio as async_timeout

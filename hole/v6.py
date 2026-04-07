@@ -1,14 +1,14 @@
 """*hole API Python client."""
 
 import asyncio
-import socket
 import json
-import time
 import logging
-from typing import Optional, Literal
+import socket
+import sys
+import time
+from typing import Literal, Optional
 
 import aiohttp
-import sys
 
 if sys.version_info >= (3, 11):
     import asyncio as async_timeout
