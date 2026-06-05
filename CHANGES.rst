@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.9.2 - 20260605
+----------------
+
+- Add typed Pi-hole v6 errors (thanks @headdirt)
+
 0.9.1 - 20260407
 ----------------
 
