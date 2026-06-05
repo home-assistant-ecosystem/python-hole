@@ -85,8 +85,8 @@ class HoleV6:
                 )
 
                 if response.status == 401:
-                    raise exceptions.HoleError(
-                        "Authentication failed: Invalid password"
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication failed: Invalid password", status=401
                     )
                 elif response.status == 400:
                     try:
@@ -96,16 +96,21 @@ class HoleV6:
                         )
                     except json.JSONDecodeError:
                         error_msg = "Bad request"
-                    raise exceptions.HoleError(f"Authentication failed: {error_msg}")
+                    raise exceptions.HoleError(
+                        f"Authentication failed: {error_msg}", status=400
+                    )
                 elif response.status != 200:
                     raise exceptions.HoleError(
-                        f"Authentication failed with status {response.status}"
+                        f"Authentication failed with status {response.status}",
+                        status=response.status,
                     )
 
                 try:
                     data = json.loads(await response.text())
                 except json.JSONDecodeError as err:
-                    raise exceptions.HoleError(f"Invalid JSON response: {err}")
+                    raise exceptions.HoleResponseError(
+                        f"Invalid JSON response: {err}"
+                    ) from err
 
                 session_data = data.get("session", {})
 
@@ -195,12 +200,25 @@ class HoleV6:
                         url, params=params, headers=headers, ssl=self.verify_tls
                     )
 
+                    # Still unauthorized after a retry means auth is genuinely
+                    # required and could not be satisfied with the credentials.
+                    if response.status == 401:
+                        raise exceptions.HoleAuthenticationError(
+                            "Authentication required", status=401
+                        )
+
                 if response.status != 200:
                     raise exceptions.HoleError(
-                        f"Failed to fetch data: {response.status}"
+                        f"Failed to fetch data: {response.status}",
+                        status=response.status,
                     )
 
-                return await response.json()
+                try:
+                    return await response.json()
+                except (aiohttp.ContentTypeError, ValueError) as err:
+                    raise exceptions.HoleResponseError(
+                        f"Invalid response from {endpoint}"
+                    ) from err
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
             raise exceptions.HoleConnectionError(
@@ -228,7 +246,11 @@ class HoleV6:
         """Get version information from Pi-hole."""
         await self.ensure_auth()
         response = await self._fetch_data("/info/version")
-        self.versions = response.get("version", {})
+        if not isinstance(response, dict) or not isinstance(
+            response.get("version"), dict
+        ):
+            raise exceptions.HoleResponseError("Unexpected response from /info/version")
+        self.versions = response["version"]
 
     async def enable(self):
         """Enable DNS blocking."""

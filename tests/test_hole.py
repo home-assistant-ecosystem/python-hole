@@ -36,6 +36,14 @@ def aiohttp_session():
     return MagicMock(spec=aiohttp.ClientSession)
 
 
+@pytest.fixture
+def hole6(aiohttp_session):
+    """Fixture for a HoleV6 client with auth stubbed out."""
+    client = HoleV6("localhost", aiohttp_session, password="pw")
+    client.ensure_auth = AsyncMock()
+    return client
+
+
 @pytest.mark.asyncio
 async def test_v5_get_data_success(aiohttp_session):
     """Test successful data retrieval for HoleV5."""
@@ -79,10 +87,8 @@ async def test_v5_get_data_connection_error(aiohttp_session):
 
 
 @pytest.mark.asyncio
-async def test_v6_get_data_success(aiohttp_session):
+async def test_v6_get_data_success(hole6):
     """Test successful data retrieval for HoleV6."""
-    hole6 = HoleV6("localhost", aiohttp_session, password="pw")
-    hole6.ensure_auth = AsyncMock()
     hole6._fetch_data = AsyncMock(
         side_effect=[
             {
@@ -104,17 +110,19 @@ async def test_v6_get_data_success(aiohttp_session):
             {"upstreams": ["8.8.8.8"]},
             {"blocking": "enabled"},
             {
-                "core": {
-                    "local": {"version": "1", "hash": "a"},
-                    "remote": {"version": "2", "hash": "b"},
-                },
-                "web": {
-                    "local": {"version": "1", "hash": "a"},
-                    "remote": {"version": "2", "hash": "b"},
-                },
-                "ftl": {
-                    "local": {"version": "1", "hash": "a"},
-                    "remote": {"version": "2", "hash": "b"},
+                "version": {
+                    "core": {
+                        "local": {"version": "1", "hash": "a"},
+                        "remote": {"version": "2", "hash": "b"},
+                    },
+                    "web": {
+                        "local": {"version": "1", "hash": "a"},
+                        "remote": {"version": "2", "hash": "b"},
+                    },
+                    "ftl": {
+                        "local": {"version": "1", "hash": "a"},
+                        "remote": {"version": "2", "hash": "b"},
+                    },
                 },
             },
         ]
@@ -131,3 +139,61 @@ async def test_v6_get_data_success(aiohttp_session):
     assert hole6.unique_clients == 2
     assert hole6.clients_ever_seen == 3
     assert hole6.status == "enabled"
+
+
+@pytest.mark.asyncio
+async def test_v6_fetch_data_authentication_error(aiohttp_session, hole6):
+    """Test a persistent 401 raises HoleAuthenticationError with status."""
+    hole6.authenticate = AsyncMock()
+    aiohttp_session.get = AsyncMock(return_value=DummyResponse(status=401))
+    with pytest.raises(exceptions.HoleAuthenticationError) as err:
+        await hole6._fetch_data("/info/version")
+    assert err.value.status == 401
+
+
+@pytest.mark.asyncio
+async def test_v6_fetch_data_error_status(aiohttp_session, hole6):
+    """Test a non-200, non-401 status raises HoleError carrying the status."""
+    aiohttp_session.get = AsyncMock(return_value=DummyResponse(status=500))
+    with pytest.raises(exceptions.HoleError) as err:
+        await hole6._fetch_data("/stats/summary")
+    assert err.value.status == 500
+    assert not isinstance(err.value, exceptions.HoleAuthenticationError)
+
+
+@pytest.mark.asyncio
+async def test_v6_fetch_data_invalid_response(aiohttp_session, hole6):
+    """Test an unparseable payload raises HoleResponseError."""
+    response = DummyResponse(status=200)
+    response.json = AsyncMock(side_effect=ValueError("bad json"))
+    aiohttp_session.get = AsyncMock(return_value=response)
+    with pytest.raises(exceptions.HoleResponseError):
+        await hole6._fetch_data("/info/version")
+
+
+@pytest.mark.asyncio
+async def test_v6_get_versions_success(hole6):
+    """Test get_versions stores the version payload."""
+    versions = {"core": {"local": {"version": "1", "hash": "a"}}}
+    hole6._fetch_data = AsyncMock(return_value={"version": versions})
+    await hole6.get_versions()
+    assert hole6.versions == versions
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", [[], {"version": "v6"}, {}])
+async def test_v6_get_versions_unexpected_payload(hole6, payload):
+    """Test an unexpected /info/version shape raises HoleResponseError."""
+    hole6._fetch_data = AsyncMock(return_value=payload)
+    with pytest.raises(exceptions.HoleResponseError):
+        await hole6.get_versions()
+
+
+@pytest.mark.asyncio
+async def test_v6_authenticate_invalid_password(aiohttp_session):
+    """Test authenticate raises HoleAuthenticationError on 401."""
+    hole6 = HoleV6("localhost", aiohttp_session, password="wrong")
+    aiohttp_session.post = AsyncMock(return_value=DummyResponse(status=401))
+    with pytest.raises(exceptions.HoleAuthenticationError) as err:
+        await hole6.authenticate()
+    assert err.value.status == 401
