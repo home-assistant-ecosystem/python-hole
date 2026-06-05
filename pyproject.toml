@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hole"
-version = "0.9.1"
+version = "0.9.2"
 description = "Python API for interacting with *hole."
 readme = "README.rst"
 license = { text = "MIT" }
