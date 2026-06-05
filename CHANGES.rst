@@ -1,6 +1,15 @@
 Changes
 =======
 
+0.9.1 - 20260407
+----------------
+
+- ``session_id`` can be None by @HarvsG in #32
+- Increase v6 timeouts and allow changing them by @ryt51V in #34
+- Improve error handling in authentication by @HarvsG in #35
+- Hatchling by @fabaff in #36
+- Add basic tests by @fabaff
+
 0.9.0 - 20250223
 ----------------
 
