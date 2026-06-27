@@ -115,8 +115,11 @@ class HoleV6:
                 session_data = data.get("session", {})
 
                 if not session_data.get("valid"):
-                    raise exceptions.HoleError(
-                        "Authentication unsuccessful: Invalid session"
+                    # Pi-hole v6 returns HTTP 200 with valid=false for wrong passwords
+                    # rather than HTTP 401. Raise the same exception as the 401 path so
+                    # callers can treat both cases uniformly.
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication failed: Invalid password", status=200
                     )
 
                 self._session_id = session_data.get("sid")
