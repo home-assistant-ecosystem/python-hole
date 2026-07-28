@@ -242,10 +242,66 @@ class HoleV6:
         self.blocking_status = await self._fetch_data("/dns/blocking")
         await self.get_versions()
 
+    async def get_version_info_raw(self) -> dict:
+        """Fetch /api/info/version without authentication.
+
+        Returns 200 with version data if no auth required, or 401 if auth needed.
+
+        Raises:
+            HoleAuthenticationError: 401 response
+            HoleResponseError: Malformed response
+            HoleConnectionError: Connection error
+        """
+        url = f"{self.base_url}/api/info/version"
+
+        try:
+            async with asyncio.timeout(self.timeout):
+                response = await self._session.get(url, ssl=self.verify_tls)
+
+                if response.status == 401:
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication required", status=401
+                    )
+                elif response.status != 200:
+                    raise exceptions.HoleError(
+                        f"Unexpected status {response.status} from /api/info/version",
+                        status=response.status,
+                    )
+
+                try:
+                    return await response.json()
+                except (aiohttp.ContentTypeError, ValueError) as err:
+                    raise exceptions.HoleResponseError(
+                        "Invalid JSON response from /api/info/version"
+                    ) from err
+
+        except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
+            raise exceptions.HoleConnectionError(
+                f"Cannot fetch version info from Pi-hole: {err}"
+            ) from err
+
+    async def is_authentication_required(self) -> bool | None:
+        """Probe if v6 API requires auth.
+
+        Returns True (401), False (200), None (unexpected response).
+        """
+        try:
+            await self.get_version_info_raw()
+            return False
+        except exceptions.HoleAuthenticationError:
+            return True
+        except exceptions.HoleError:
+            # Unexpected response, assume not v6 or unable to determine
+            return None
+
     async def get_versions(self):
-        """Get version information from Pi-hole."""
-        await self.ensure_auth()
-        response = await self._fetch_data("/info/version")
+        """Get version info (with or without auth depending on password)."""
+        if self.password:
+            await self.ensure_auth()
+            response = await self._fetch_data("/info/version")
+        else:
+            response = await self.get_version_info_raw()
+
         if not isinstance(response, dict) or not isinstance(
             response.get("version"), dict
         ):

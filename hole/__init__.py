@@ -1,6 +1,11 @@
 """Support for Pi-hole API v5 and v6."""
 
-from .exceptions import HoleError
+from .exceptions import (
+    HoleAuthenticationError,
+    HoleConnectionError,
+    HoleError,
+    HoleResponseError,
+)
 from .v5 import HoleV5
 from .v6 import HoleV6
 

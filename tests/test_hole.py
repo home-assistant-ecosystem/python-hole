@@ -197,3 +197,107 @@ async def test_v6_authenticate_invalid_password(aiohttp_session):
     with pytest.raises(exceptions.HoleAuthenticationError) as err:
         await hole6.authenticate()
     assert err.value.status == 401
+
+
+# Tests for new auth-optional version detection
+
+
+@pytest.mark.asyncio
+async def test_v6_get_version_info_raw_success(aiohttp_session):
+    """Test get_version_info_raw fetches /api/info/version without auth."""
+    version_data = {
+        "version": {
+            "core": {"local": {"version": "v6.0.0"}},
+            "web": {"local": {"version": "v2.0"}},
+        }
+    }
+    aiohttp_session.get = AsyncMock(
+        return_value=DummyResponse(status=200, json_data=version_data)
+    )
+    hole6 = HoleV6("localhost", aiohttp_session)
+    result = await hole6.get_version_info_raw()
+    assert result == version_data
+
+
+@pytest.mark.asyncio
+async def test_v6_get_version_info_raw_auth_required(aiohttp_session):
+    """Test get_version_info_raw raises HoleAuthenticationError on 401."""
+    aiohttp_session.get = AsyncMock(return_value=DummyResponse(status=401))
+    hole6 = HoleV6("localhost", aiohttp_session)
+    with pytest.raises(exceptions.HoleAuthenticationError) as err:
+        await hole6.get_version_info_raw()
+    assert err.value.status == 401
+
+
+@pytest.mark.asyncio
+async def test_v6_get_version_info_raw_invalid_json(aiohttp_session):
+    """Test get_version_info_raw raises HoleResponseError on invalid JSON."""
+    response = DummyResponse(status=200)
+    response.json = AsyncMock(side_effect=ValueError("bad json"))
+    aiohttp_session.get = AsyncMock(return_value=response)
+    hole6 = HoleV6("localhost", aiohttp_session)
+    with pytest.raises(exceptions.HoleResponseError):
+        await hole6.get_version_info_raw()
+
+
+@pytest.mark.asyncio
+async def test_v6_get_version_info_raw_connection_error(aiohttp_session):
+    """Test get_version_info_raw raises HoleConnectionError on connection failure."""
+    aiohttp_session.get = AsyncMock(side_effect=aiohttp.ClientError)
+    hole6 = HoleV6("localhost", aiohttp_session)
+    with pytest.raises(exceptions.HoleConnectionError):
+        await hole6.get_version_info_raw()
+
+
+@pytest.mark.asyncio
+async def test_v6_is_authentication_required_true(aiohttp_session):
+    """Test is_authentication_required returns True when 401."""
+    aiohttp_session.get = AsyncMock(return_value=DummyResponse(status=401))
+    hole6 = HoleV6("localhost", aiohttp_session)
+    result = await hole6.is_authentication_required()
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_v6_is_authentication_required_false(aiohttp_session):
+    """Test is_authentication_required returns False when 200 with version data."""
+    version_data = {"version": {"core": {"local": {"version": "v6.0.0"}}}}
+    aiohttp_session.get = AsyncMock(
+        return_value=DummyResponse(status=200, json_data=version_data)
+    )
+    hole6 = HoleV6("localhost", aiohttp_session)
+    result = await hole6.is_authentication_required()
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_v6_is_authentication_required_unknown(aiohttp_session):
+    """Test is_authentication_required returns None for unexpected responses."""
+    aiohttp_session.get = AsyncMock(return_value=DummyResponse(status=500))
+    hole6 = HoleV6("localhost", aiohttp_session)
+    result = await hole6.is_authentication_required()
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_v6_get_versions_without_password(aiohttp_session):
+    """Test get_versions without password uses get_version_info_raw."""
+    version_data = {
+        "version": {"core": {"local": {"version": "v6.0.0"}}}
+    }
+    aiohttp_session.get = AsyncMock(
+        return_value=DummyResponse(status=200, json_data=version_data)
+    )
+    hole6 = HoleV6("localhost", aiohttp_session)  # no password
+    await hole6.get_versions()
+    assert hole6.versions == version_data["version"]
+
+
+@pytest.mark.asyncio
+async def test_v6_get_versions_with_password(hole6):
+    """Test get_versions with password uses _fetch_data (with auth)."""
+    versions = {"core": {"local": {"version": "v6.0.0"}}}
+    hole6._fetch_data = AsyncMock(return_value={"version": versions})
+    await hole6.get_versions()
+    hole6.ensure_auth.assert_called_once()
+    hole6._fetch_data.assert_called_once_with("/info/version")
