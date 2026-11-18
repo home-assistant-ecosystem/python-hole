@@ -46,6 +46,7 @@ class HoleV6:
         self._session_id = None
         self._session_validity = None
         self._csrf_token = None
+        self._authenticated = False
 
         # Set default ports if not specified
         if port is None:
@@ -69,19 +70,17 @@ class HoleV6:
 
     async def authenticate(self):
         """Authenticate with Pi-hole and get session ID."""
-        if not self.password:
-            return
-
         # If we have an existing session, logout first
         if self._session_id:
             await self.logout()
 
         auth_url = f"{self.base_url}/api/auth"
+        password_str = "" if self.password is None else str(self.password)
 
         try:
             async with asyncio.timeout(self.timeout):
                 response = await self._session.post(
-                    auth_url, json={"password": str(self.password)}, ssl=self.verify_tls
+                    auth_url, json={"password": password_str}, ssl=self.verify_tls
                 )
 
                 if response.status == 401:
@@ -115,24 +114,27 @@ class HoleV6:
                 session_data = data.get("session", {})
 
                 if not session_data.get("valid"):
-                    raise exceptions.HoleError(
-                        "Authentication unsuccessful: Invalid session"
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication failed: Invalid password", status=200
                     )
 
                 self._session_id = session_data.get("sid")
-                if not self._session_id:
-                    raise exceptions.HoleError(
-                        "Authentication failed: No session ID received"
-                    )
+                self._authenticated = True
 
                 # Store CSRF token if provided
                 self._csrf_token = session_data.get("csrf")
 
-                # Set session validity
+                # Set session validity (-1 or 0 indicates no expiry / no password required)
                 validity_seconds = session_data.get("validity", 300)
-                self._session_validity = time.time() + validity_seconds
+                if validity_seconds and validity_seconds > 0:
+                    self._session_validity = time.time() + validity_seconds
+                else:
+                    self._session_validity = None
 
-                _LOGGER.info("Successfully authenticated with Pi-hole")
+                _LOGGER.info(
+                    "Successfully authenticated with Pi-hole%s",
+                    " (no password required)" if not self._session_id else "",
+                )
 
         except (asyncio.TimeoutError, aiohttp.ClientError, socket.gaierror) as err:
             raise exceptions.HoleConnectionError(
@@ -142,6 +144,7 @@ class HoleV6:
     async def logout(self):
         """Logout and cleanup the current session."""
         if not self._session_id:
+            self._authenticated = False
             return
 
         logout_url = f"{self.base_url}/api/auth"
@@ -155,6 +158,8 @@ class HoleV6:
         finally:
             self._session_id = None
             self._session_validity = None
+            self._csrf_token = None
+            self._authenticated = False
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -166,7 +171,7 @@ class HoleV6:
 
     async def ensure_auth(self):
         """Ensure we have a valid session."""
-        if not self._session_id or (
+        if not self._authenticated or (
             self._session_validity and time.time() > self._session_validity
         ):
             await self.authenticate()
@@ -191,7 +196,9 @@ class HoleV6:
 
                 if response.status == 401:
                     _LOGGER.info("Session expired, re-authenticating")
+                    self._authenticated = False
                     await self.authenticate()
+                    headers = {}
                     if self._session_id:
                         headers["X-FTL-SID"] = self._session_id
                         if self._csrf_token:
@@ -254,16 +261,13 @@ class HoleV6:
 
     async def enable(self):
         """Enable DNS blocking."""
-        if not self.password:
-            raise exceptions.HoleError(
-                "Password required for enable/disable operations"
-            )
-
         await self.ensure_auth()
         url = f"{self.base_url}/api/dns/blocking"
-        headers = {"X-FTL-SID": self._session_id}
-        if self._csrf_token:
-            headers["X-FTL-CSRF"] = self._csrf_token
+        headers = {}
+        if self._session_id:
+            headers["X-FTL-SID"] = self._session_id
+            if self._csrf_token:
+                headers["X-FTL-CSRF"] = self._csrf_token
 
         payload = {"blocking": True, "timer": None}
 
@@ -299,16 +303,13 @@ class HoleV6:
         Args:
             duration: Number of seconds to disable blocking for. If 0, disable indefinitely.
         """
-        if not self.password:
-            raise exceptions.HoleError(
-                "Password required for enable/disable operations"
-            )
-
         await self.ensure_auth()
         url = f"{self.base_url}/api/dns/blocking"
-        headers = {"X-FTL-SID": self._session_id}
-        if self._csrf_token:
-            headers["X-FTL-CSRF"] = self._csrf_token
+        headers = {}
+        if self._session_id:
+            headers["X-FTL-SID"] = self._session_id
+            if self._csrf_token:
+                headers["X-FTL-CSRF"] = self._csrf_token
 
         payload = {"blocking": False, "timer": duration if duration > 0 else None}
 
