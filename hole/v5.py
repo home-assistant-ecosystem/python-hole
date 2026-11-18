@@ -40,7 +40,8 @@ class HoleV5(object):
 
     async def get_data(self):
         """Get details of a *hole instance."""
-        params = "summaryRaw&auth={}".format(self.api_token)
+        auth_token = "" if self.api_token is None else self.api_token
+        params = "summaryRaw&auth={}".format(auth_token)
         try:
             async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
@@ -72,18 +73,28 @@ class HoleV5(object):
 
     async def enable(self):
         """Enable DNS blocking on a *hole instance."""
-        if self.api_token is None:
-            _LOGGER.error("You need to supply an api_token to use this")
-            return
-        params = "enable=True&auth={}".format(self.api_token)
+        auth_token = "" if self.api_token is None else self.api_token
+        params = "enable=True&auth={}".format(auth_token)
         try:
             async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
                 _LOGGER.debug("Response from *hole: %s", response.status)
+                text = await response.text()
+                if "Not authorized!" in text or "Session expired!" in text:
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication failed: Invalid API token", status=401
+                    )
 
-                while self.status != "enabled":
+                while (
+                    not isinstance(self.data, dict)
+                    or self.data.get("status") != "enabled"
+                ):
                     _LOGGER.debug("Awaiting status to be enabled")
                     await self.get_data()
+                    if not isinstance(self.data, dict):
+                        raise exceptions.HoleAuthenticationError(
+                            "Authentication required", status=401
+                        )
                     await asyncio.sleep(0.01)
 
             data = self.status
@@ -96,18 +107,28 @@ class HoleV5(object):
 
     async def disable(self, duration=True):
         """Disable DNS blocking on a *hole instance."""
-        if self.api_token is None:
-            _LOGGER.error("You need to supply an api_token to use this")
-            return
-        params = "disable={}&auth={}".format(duration, self.api_token)
+        auth_token = "" if self.api_token is None else self.api_token
+        params = "disable={}&auth={}".format(duration, auth_token)
         try:
             async with asyncio.timeout(5):
                 response = await self._session.get(self.base_url, params=params)
                 _LOGGER.debug("Response from *hole: %s", response.status)
+                text = await response.text()
+                if "Not authorized!" in text or "Session expired!" in text:
+                    raise exceptions.HoleAuthenticationError(
+                        "Authentication failed: Invalid API token", status=401
+                    )
 
-                while self.status != "disabled":
+                while (
+                    not isinstance(self.data, dict)
+                    or self.data.get("status") != "disabled"
+                ):
                     _LOGGER.debug("Awaiting status to be disabled")
                     await self.get_data()
+                    if not isinstance(self.data, dict):
+                        raise exceptions.HoleAuthenticationError(
+                            "Authentication required", status=401
+                        )
                     await asyncio.sleep(0.01)
 
             data = self.status
